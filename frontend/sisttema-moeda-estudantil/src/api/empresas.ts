@@ -8,7 +8,7 @@ import type {
 const base = '/api/empresas'
 
 export const empresasApi = {
-  list: () => http.get<EmpresaParceira[]>(base).then(r => r.data),
+  me: () => http.get<EmpresaParceira>(`${base}/me`).then(r => r.data),
   get: (id: number) => http.get<EmpresaParceira>(`${base}/${id}`).then(r => r.data),
   create: (dto: EmpresaParceiraCreate) =>
     http.post<EmpresaParceira>(base, dto).then(r => r.data),

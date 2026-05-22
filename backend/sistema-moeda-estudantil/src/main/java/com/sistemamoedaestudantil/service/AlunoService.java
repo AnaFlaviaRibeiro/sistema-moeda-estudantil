@@ -12,6 +12,7 @@ import com.sistemamoedaestudantil.exception.BusinessException;
 import com.sistemamoedaestudantil.exception.NotFoundException;
 import com.sistemamoedaestudantil.repository.AlunoRepository;
 import com.sistemamoedaestudantil.repository.InstituicaoRepository;
+import com.sistemamoedaestudantil.security.PasswordService;
 import jakarta.inject.Singleton;
 
 import javax.transaction.Transactional;
@@ -23,11 +24,14 @@ public class AlunoService {
 
     private final AlunoRepository alunoRepository;
     private final InstituicaoRepository instituicaoRepository;
+    private final PasswordService passwordService;
 
     public AlunoService(AlunoRepository alunoRepository,
-                        InstituicaoRepository instituicaoRepository) {
+                        InstituicaoRepository instituicaoRepository,
+                        PasswordService passwordService) {
         this.alunoRepository = alunoRepository;
         this.instituicaoRepository = instituicaoRepository;
+        this.passwordService = passwordService;
     }
 
     @Transactional
@@ -44,8 +48,8 @@ public class AlunoService {
 
         Aluno aluno = new Aluno();
         aluno.setNome(dto.getNome());
-        aluno.setEmail(dto.getEmail());
-        aluno.setSenha(dto.getSenha());
+        aluno.setEmail(dto.getEmail().trim().toLowerCase());
+        aluno.setSenha(passwordService.hash(dto.getSenha()));
         aluno.setCpf(dto.getCpf());
         aluno.setRg(dto.getRg());
         aluno.setCurso(dto.getCurso());

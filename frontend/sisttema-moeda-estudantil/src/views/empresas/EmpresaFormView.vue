@@ -1,14 +1,30 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { complementoOptionsFor, parseUfFromApi, ufOptionsFor } from '../../constants/endereco'
+import { useRoute, useRouter } from 'vue-router'
 import { empresasApi } from '../../api/empresas'
 import { extractErrorMessage } from '../../api/client'
+import { useAuth } from '../../composables/useAuth'
+import { maskCep, maskCnpj, maskTelefone, onCepInput, onCnpjInput, onTelefoneInput } from '../../utils/masks'
 import type { EmpresaParceiraCreate, EmpresaParceiraUpdate } from '../../types'
 
 const props = defineProps<{ id?: string }>()
 
 const router = useRouter()
-const isEdit = computed(() => Boolean(props.id))
+const route = useRoute()
+const auth = useAuth()
+
+const isOwnProfile = computed(() => route.name === 'minha-empresa')
+const isEdit = computed(() => isOwnProfile.value || Boolean(props.id))
+const editId = computed(() =>
+  isOwnProfile.value ? auth.user.value?.id : props.id ? Number(props.id) : undefined,
+)
+
+const complementoOpcoes = computed(() =>
+  complementoOptionsFor(form.endereco?.complemento),
+)
+
+const ufOpcoes = computed(() => ufOptionsFor(form.endereco?.uf))
 
 const form = reactive<EmpresaParceiraCreate & EmpresaParceiraUpdate>({
   razaoSocial: '',
@@ -32,22 +48,24 @@ const loading = ref(false)
 const saving = ref(false)
 
 async function load() {
-  if (!isEdit.value || !props.id) return
+  if (!isEdit.value) return
   loading.value = true
   try {
-    const e = await empresasApi.get(Number(props.id))
+    const e = isOwnProfile.value
+      ? await empresasApi.me()
+      : await empresasApi.get(Number(props.id))
     form.razaoSocial = e.razaoSocial
-    form.cnpj = e.cnpj
+    form.cnpj = maskCnpj(e.cnpj)
     form.email = e.email
-    form.contato = e.contato ?? ''
+    form.contato = maskTelefone(e.contato ?? '')
     form.endereco = {
       logradouro: e.endereco?.logradouro ?? '',
       numero: e.endereco?.numero ?? '',
       complemento: e.endereco?.complemento ?? '',
       bairro: e.endereco?.bairro ?? '',
       cidade: e.endereco?.cidade ?? '',
-      uf: e.endereco?.uf ?? '',
-      cep: e.endereco?.cep ?? '',
+      uf: parseUfFromApi(e.endereco?.uf),
+      cep: maskCep(e.endereco?.cep ?? ''),
     }
   } catch (e) {
     error.value = extractErrorMessage(e)
@@ -60,14 +78,14 @@ async function submit() {
   saving.value = true
   error.value = null
   try {
-    if (isEdit.value && props.id) {
+    if (isEdit.value && editId.value) {
       const dto: EmpresaParceiraUpdate = {
         razaoSocial: form.razaoSocial,
         email: form.email,
         contato: form.contato,
         endereco: form.endereco,
       }
-      await empresasApi.update(Number(props.id), dto)
+      await empresasApi.update(editId.value, dto)
     } else {
       const dto: EmpresaParceiraCreate = {
         razaoSocial: form.razaoSocial,
@@ -79,7 +97,11 @@ async function submit() {
       }
       await empresasApi.create(dto)
     }
-    router.push({ name: 'empresas-list' })
+    if (isOwnProfile.value || isEdit.value) {
+      router.push({ name: 'home' })
+    } else {
+      router.push({ name: 'login' })
+    }
   } catch (e) {
     error.value = extractErrorMessage(e)
   } finally {
@@ -93,10 +115,10 @@ onMounted(load)
 <template>
   <div class="page-header">
     <div>
-      <h1>{{ isEdit ? 'Editar empresa' : 'Nova empresa parceira' }}</h1>
-      <p>Preencha os dados da empresa.</p>
+      <h1>{{ isOwnProfile ? 'Minha empresa' : isEdit ? 'Editar empresa' : 'Nova empresa parceira' }}</h1>
+      <p>{{ isOwnProfile ? 'Atualize os dados da sua empresa parceira.' : 'Preencha os dados da empresa.' }}</p>
     </div>
-    <button class="btn" @click="router.push({ name: 'empresas-list' })">← Voltar</button>
+    <button class="btn" @click="router.push({ name: isOwnProfile ? 'home' : 'login' })">← Voltar</button>
   </div>
 
   <div v-if="error" class="alert alert-error">{{ error }}</div>
@@ -110,7 +132,16 @@ onMounted(load)
       </label>
       <label>
         CNPJ
-        <input v-model="form.cnpj" required maxlength="18" :disabled="isEdit" />
+        <input
+          :value="form.cnpj"
+          required
+          maxlength="18"
+          inputmode="numeric"
+          autocomplete="off"
+          placeholder="00.000.000/0000-00"
+          :disabled="isEdit"
+          @input="onCnpjInput($event, v => (form.cnpj = v))"
+        />
       </label>
     </div>
 
@@ -121,7 +152,14 @@ onMounted(load)
       </label>
       <label>
         Contato
-        <input v-model="form.contato" maxlength="100" />
+        <input
+          :value="form.contato"
+          maxlength="15"
+          inputmode="tel"
+          autocomplete="tel"
+          placeholder="(00) 00000-0000"
+          @input="onTelefoneInput($event, v => (form.contato = v))"
+        />
       </label>
       <label v-if="!isEdit">
         Senha
@@ -142,7 +180,11 @@ onMounted(load)
         </label>
         <label>
           Complemento
-          <input v-model="form.endereco!.complemento" maxlength="100" />
+          <select v-model="form.endereco!.complemento">
+            <option v-for="op in complementoOpcoes" :key="op.value" :value="op.value">
+              {{ op.label }}
+            </option>
+          </select>
         </label>
       </div>
       <div class="form-row-3" style="margin-top: 12px;">
@@ -156,17 +198,28 @@ onMounted(load)
         </label>
         <label>
           UF
-          <input v-model="form.endereco!.uf" maxlength="2" />
+          <select v-model="form.endereco!.uf">
+            <option v-for="op in ufOpcoes" :key="op.value" :value="op.value">
+              {{ op.label }}
+            </option>
+          </select>
         </label>
       </div>
       <label style="margin-top: 12px; max-width: 200px;">
         CEP
-        <input v-model="form.endereco!.cep" maxlength="9" />
+        <input
+          :value="form.endereco!.cep"
+          maxlength="9"
+          inputmode="numeric"
+          autocomplete="postal-code"
+          placeholder="00000-000"
+          @input="onCepInput($event, v => (form.endereco!.cep = v))"
+        />
       </label>
     </fieldset>
 
     <div class="form-actions">
-      <button type="button" class="btn" @click="router.push({ name: 'empresas-list' })">Cancelar</button>
+      <button type="button" class="btn" @click="router.push({ name: isOwnProfile ? 'home' : 'login' })">Cancelar</button>
       <button type="submit" class="btn btn-primary" :disabled="saving">
         {{ saving ? 'Salvando…' : isEdit ? 'Salvar alterações' : 'Cadastrar' }}
       </button>

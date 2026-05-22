@@ -1,15 +1,31 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { complementoOptionsFor, parseUfFromApi, ufOptionsFor } from '../../constants/endereco'
+import { useRoute, useRouter } from 'vue-router'
 import { alunosApi } from '../../api/alunos'
 import { instituicoesApi } from '../../api/instituicoes'
 import { extractErrorMessage } from '../../api/client'
+import { useAuth } from '../../composables/useAuth'
+import { maskCep, maskCpf, onCepInput, onCpfInput } from '../../utils/masks'
 import type { AlunoCreate, AlunoUpdate, Instituicao } from '../../types'
 
 const props = defineProps<{ id?: string }>()
 
 const router = useRouter()
-const isEdit = computed(() => Boolean(props.id))
+const route = useRoute()
+const auth = useAuth()
+
+const isOwnProfile = computed(() => route.name === 'meu-perfil')
+const isEdit = computed(() => isOwnProfile.value || Boolean(props.id))
+const editId = computed(() =>
+  isOwnProfile.value ? auth.user.value?.id : props.id ? Number(props.id) : undefined,
+)
+
+const complementoOpcoes = computed(() =>
+  complementoOptionsFor(form.endereco?.complemento),
+)
+
+const ufOpcoes = computed(() => ufOptionsFor(form.endereco?.uf))
 
 const form = reactive<AlunoCreate & AlunoUpdate>({
   nome: '',
@@ -39,11 +55,11 @@ async function load() {
   loading.value = true
   try {
     instituicoes.value = await instituicoesApi.list()
-    if (isEdit.value && props.id) {
-      const a = await alunosApi.get(Number(props.id))
+    if (isOwnProfile.value) {
+      const a = await alunosApi.me()
       form.nome = a.nome
       form.email = a.email
-      form.cpf = a.cpf
+      form.cpf = maskCpf(a.cpf)
       form.rg = a.rg ?? ''
       form.curso = a.curso
       form.instituicaoId = a.instituicao?.id ?? 0
@@ -53,8 +69,25 @@ async function load() {
         complemento: a.endereco?.complemento ?? '',
         bairro: a.endereco?.bairro ?? '',
         cidade: a.endereco?.cidade ?? '',
-        uf: a.endereco?.uf ?? '',
-        cep: a.endereco?.cep ?? '',
+        uf: parseUfFromApi(a.endereco?.uf),
+        cep: maskCep(a.endereco?.cep ?? ''),
+      }
+    } else if (isEdit.value && props.id) {
+      const a = await alunosApi.get(Number(props.id))
+      form.nome = a.nome
+      form.email = a.email
+      form.cpf = maskCpf(a.cpf)
+      form.rg = a.rg ?? ''
+      form.curso = a.curso
+      form.instituicaoId = a.instituicao?.id ?? 0
+      form.endereco = {
+        logradouro: a.endereco?.logradouro ?? '',
+        numero: a.endereco?.numero ?? '',
+        complemento: a.endereco?.complemento ?? '',
+        bairro: a.endereco?.bairro ?? '',
+        cidade: a.endereco?.cidade ?? '',
+        uf: parseUfFromApi(a.endereco?.uf),
+        cep: maskCep(a.endereco?.cep ?? ''),
       }
     } else if (instituicoes.value.length > 0) {
       form.instituicaoId = instituicoes.value[0].id
@@ -70,7 +103,7 @@ async function submit() {
   saving.value = true
   error.value = null
   try {
-    if (isEdit.value && props.id) {
+    if (isEdit.value && editId.value) {
       const dto: AlunoUpdate = {
         nome: form.nome,
         email: form.email,
@@ -79,7 +112,7 @@ async function submit() {
         instituicaoId: form.instituicaoId,
         endereco: form.endereco,
       }
-      await alunosApi.update(Number(props.id), dto)
+      await alunosApi.update(editId.value, dto)
     } else {
       const dto: AlunoCreate = {
         nome: form.nome,
@@ -93,7 +126,11 @@ async function submit() {
       }
       await alunosApi.create(dto)
     }
-    router.push({ name: 'alunos-list' })
+    if (isOwnProfile.value || isEdit.value) {
+      router.push({ name: 'home' })
+    } else {
+      router.push({ name: 'login' })
+    }
   } catch (e) {
     error.value = extractErrorMessage(e)
   } finally {
@@ -107,10 +144,10 @@ onMounted(load)
 <template>
   <div class="page-header">
     <div>
-      <h1>{{ isEdit ? 'Editar aluno' : 'Novo aluno' }}</h1>
-      <p>Preencha os dados do aluno.</p>
+      <h1>{{ isOwnProfile ? 'Meu cadastro' : isEdit ? 'Editar aluno' : 'Novo aluno' }}</h1>
+      <p>{{ isOwnProfile ? 'Atualize seus dados de participação no programa.' : 'Preencha os dados do aluno.' }}</p>
     </div>
-    <button class="btn" @click="router.push({ name: 'alunos-list' })">← Voltar</button>
+    <button class="btn" @click="router.push({ name: isOwnProfile ? 'home' : 'login' })">← Voltar</button>
   </div>
 
   <div v-if="error" class="alert alert-error">{{ error }}</div>
@@ -131,7 +168,16 @@ onMounted(load)
     <div class="form-row-3">
       <label>
         CPF
-        <input v-model="form.cpf" required maxlength="14" :disabled="isEdit" />
+        <input
+          :value="form.cpf"
+          required
+          maxlength="14"
+          inputmode="numeric"
+          autocomplete="off"
+          placeholder="000.000.000-00"
+          :disabled="isEdit"
+          @input="onCpfInput($event, v => (form.cpf = v))"
+        />
       </label>
       <label>
         RG
@@ -169,7 +215,11 @@ onMounted(load)
         </label>
         <label>
           Complemento
-          <input v-model="form.endereco!.complemento" maxlength="100" />
+          <select v-model="form.endereco!.complemento">
+            <option v-for="op in complementoOpcoes" :key="op.value" :value="op.value">
+              {{ op.label }}
+            </option>
+          </select>
         </label>
       </div>
       <div class="form-row-3" style="margin-top: 12px;">
@@ -183,17 +233,28 @@ onMounted(load)
         </label>
         <label>
           UF
-          <input v-model="form.endereco!.uf" maxlength="2" />
+          <select v-model="form.endereco!.uf">
+            <option v-for="op in ufOpcoes" :key="op.value" :value="op.value">
+              {{ op.label }}
+            </option>
+          </select>
         </label>
       </div>
       <label style="margin-top: 12px; max-width: 200px;">
         CEP
-        <input v-model="form.endereco!.cep" maxlength="9" />
+        <input
+          :value="form.endereco!.cep"
+          maxlength="9"
+          inputmode="numeric"
+          autocomplete="postal-code"
+          placeholder="00000-000"
+          @input="onCepInput($event, v => (form.endereco!.cep = v))"
+        />
       </label>
     </fieldset>
 
     <div class="form-actions">
-      <button type="button" class="btn" @click="router.push({ name: 'alunos-list' })">Cancelar</button>
+      <button type="button" class="btn" @click="router.push({ name: isOwnProfile ? 'home' : 'login' })">Cancelar</button>
       <button type="submit" class="btn btn-primary" :disabled="saving">
         {{ saving ? 'Salvando…' : isEdit ? 'Salvar alterações' : 'Cadastrar' }}
       </button>

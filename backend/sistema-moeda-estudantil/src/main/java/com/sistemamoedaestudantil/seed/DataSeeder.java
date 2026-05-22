@@ -9,6 +9,7 @@ import com.sistemamoedaestudantil.repository.AlunoRepository;
 import com.sistemamoedaestudantil.repository.EmpresaParceiraRepository;
 import com.sistemamoedaestudantil.repository.InstituicaoRepository;
 import com.sistemamoedaestudantil.repository.ProfessorRepository;
+import com.sistemamoedaestudantil.security.PasswordService;
 import io.micronaut.context.event.ApplicationEventListener;
 import io.micronaut.runtime.server.event.ServerStartupEvent;
 import jakarta.inject.Singleton;
@@ -29,15 +30,18 @@ public class DataSeeder implements ApplicationEventListener<ServerStartupEvent> 
     private final ProfessorRepository professorRepository;
     private final AlunoRepository alunoRepository;
     private final EmpresaParceiraRepository empresaParceiraRepository;
+    private final PasswordService passwordService;
 
     public DataSeeder(InstituicaoRepository instituicaoRepository,
                       ProfessorRepository professorRepository,
                       AlunoRepository alunoRepository,
-                      EmpresaParceiraRepository empresaParceiraRepository) {
+                      EmpresaParceiraRepository empresaParceiraRepository,
+                      PasswordService passwordService) {
         this.instituicaoRepository = instituicaoRepository;
         this.professorRepository = professorRepository;
         this.alunoRepository = alunoRepository;
         this.empresaParceiraRepository = empresaParceiraRepository;
+        this.passwordService = passwordService;
     }
 
     @Override
@@ -76,7 +80,7 @@ public class DataSeeder implements ApplicationEventListener<ServerStartupEvent> 
         Professor p1 = new Professor();
         p1.setNome("Prof. João da Silva");
         p1.setEmail("joao.silva@puc.example");
-        p1.setSenha("changeit");
+        p1.setSenha(passwordService.hash("changeit"));
         p1.setCpf("111.111.111-11");
         p1.setDepartamento("Ciência da Computação");
         p1.setSaldo(1000);
@@ -85,7 +89,7 @@ public class DataSeeder implements ApplicationEventListener<ServerStartupEvent> 
         Professor p2 = new Professor();
         p2.setNome("Profa. Maria Souza");
         p2.setEmail("maria.souza@puc.example");
-        p2.setSenha("changeit");
+        p2.setSenha(passwordService.hash("changeit"));
         p2.setCpf("222.222.222-22");
         p2.setDepartamento("Engenharia de Software");
         p2.setSaldo(1000);
@@ -94,7 +98,7 @@ public class DataSeeder implements ApplicationEventListener<ServerStartupEvent> 
         Professor p3 = new Professor();
         p3.setNome("Prof. Carlos Almeida");
         p3.setEmail("carlos.almeida@ufmg.example");
-        p3.setSenha("changeit");
+        p3.setSenha(passwordService.hash("changeit"));
         p3.setCpf("333.333.333-33");
         p3.setDepartamento("Sistemas de Informação");
         p3.setSaldo(1000);
@@ -119,7 +123,7 @@ public class DataSeeder implements ApplicationEventListener<ServerStartupEvent> 
         Aluno a1 = new Aluno();
         a1.setNome("Ana Beatriz Lima");
         a1.setEmail("ana.lima@aluno.puc.example");
-        a1.setSenha("changeit");
+        a1.setSenha(passwordService.hash("changeit"));
         a1.setCpf("444.111.222-01");
         a1.setRg("MG-12.345.678");
         a1.setCurso("Ciência da Computação");
@@ -132,7 +136,7 @@ public class DataSeeder implements ApplicationEventListener<ServerStartupEvent> 
         Aluno a2 = new Aluno();
         a2.setNome("Bruno Henrique Costa");
         a2.setEmail("bruno.costa@aluno.puc.example");
-        a2.setSenha("changeit");
+        a2.setSenha(passwordService.hash("changeit"));
         a2.setCpf("444.111.222-02");
         a2.setRg("MG-22.345.678");
         a2.setCurso("Engenharia de Software");
@@ -145,7 +149,7 @@ public class DataSeeder implements ApplicationEventListener<ServerStartupEvent> 
         Aluno a3 = new Aluno();
         a3.setNome("Camila Rocha");
         a3.setEmail("camila.rocha@aluno.ufmg.example");
-        a3.setSenha("changeit");
+        a3.setSenha(passwordService.hash("changeit"));
         a3.setCpf("444.222.333-03");
         a3.setRg("MG-32.345.678");
         a3.setCurso("Sistemas de Informação");
@@ -158,7 +162,7 @@ public class DataSeeder implements ApplicationEventListener<ServerStartupEvent> 
         Aluno a4 = new Aluno();
         a4.setNome("Diego Martins");
         a4.setEmail("diego.martins@aluno.ufmg.example");
-        a4.setSenha("changeit");
+        a4.setSenha(passwordService.hash("changeit"));
         a4.setCpf("444.222.333-04");
         a4.setRg("MG-42.345.678");
         a4.setCurso("Engenharia de Computação");
@@ -171,7 +175,7 @@ public class DataSeeder implements ApplicationEventListener<ServerStartupEvent> 
         Aluno a5 = new Aluno();
         a5.setNome("Eduarda Pereira");
         a5.setEmail("eduarda.pereira@aluno.cefet.example");
-        a5.setSenha("changeit");
+        a5.setSenha(passwordService.hash("changeit"));
         a5.setCpf("444.333.444-05");
         a5.setRg("MG-52.345.678");
         a5.setCurso("Engenharia Eletrônica");
@@ -194,7 +198,7 @@ public class DataSeeder implements ApplicationEventListener<ServerStartupEvent> 
         e1.setRazaoSocial("Restaurante Universitário Sabor & Cia Ltda");
         e1.setCnpj("12.345.678/0001-90");
         e1.setEmail("contato@saborecia.example");
-        e1.setSenha("changeit");
+        e1.setSenha(passwordService.hash("changeit"));
         e1.setContato("(31) 3221-1100");
         e1.setEndereco(novoEndereco(
                 "Rua dos Inconfidentes", "1100", null,
@@ -204,7 +208,7 @@ public class DataSeeder implements ApplicationEventListener<ServerStartupEvent> 
         e2.setRazaoSocial("Livraria do Saber Editora Ltda");
         e2.setCnpj("23.456.789/0001-12");
         e2.setEmail("parceria@livrariadosaber.example");
-        e2.setSenha("changeit");
+        e2.setSenha(passwordService.hash("changeit"));
         e2.setContato("(31) 3344-5500");
         e2.setEndereco(novoEndereco(
                 "Av. Augusto de Lima", "233", "Loja 12",
@@ -214,7 +218,7 @@ public class DataSeeder implements ApplicationEventListener<ServerStartupEvent> 
         e3.setRazaoSocial("Papelaria Universitária Express ME");
         e3.setCnpj("34.567.890/0001-55");
         e3.setEmail("contato@papelariaexpress.example");
-        e3.setSenha("changeit");
+        e3.setSenha(passwordService.hash("changeit"));
         e3.setContato("(31) 3555-2233");
         e3.setEndereco(novoEndereco(
                 "Av. Antônio Carlos", "6500", null,
@@ -224,7 +228,7 @@ public class DataSeeder implements ApplicationEventListener<ServerStartupEvent> 
         e4.setRazaoSocial("Café & Cultura Bistrô Ltda");
         e4.setCnpj("45.678.901/0001-77");
         e4.setEmail("vendas@cafeecultura.example");
-        e4.setSenha("changeit");
+        e4.setSenha(passwordService.hash("changeit"));
         e4.setContato("(31) 3777-8899");
         e4.setEndereco(novoEndereco(
                 "Rua Pernambuco", "1212", "Térreo",

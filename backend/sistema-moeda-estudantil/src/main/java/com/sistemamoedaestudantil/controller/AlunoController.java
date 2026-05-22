@@ -3,6 +3,8 @@ package com.sistemamoedaestudantil.controller;
 import com.sistemamoedaestudantil.dto.AlunoCreateDTO;
 import com.sistemamoedaestudantil.dto.AlunoResponseDTO;
 import com.sistemamoedaestudantil.dto.AlunoUpdateDTO;
+import com.sistemamoedaestudantil.security.AuthenticatedUser;
+import com.sistemamoedaestudantil.security.AuthorizationService;
 import com.sistemamoedaestudantil.service.AlunoService;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MediaType;
@@ -24,18 +26,28 @@ import java.util.List;
 public class AlunoController {
 
     private final AlunoService alunoService;
+    private final AuthorizationService authorization;
 
-    public AlunoController(AlunoService alunoService) {
+    public AlunoController(AlunoService alunoService, AuthorizationService authorization) {
         this.alunoService = alunoService;
+        this.authorization = authorization;
+    }
+
+    @Get(value = "/me", produces = MediaType.APPLICATION_JSON)
+    public AlunoResponseDTO meuPerfil(AuthenticatedUser user) {
+        authorization.requireAluno(user);
+        return alunoService.buscarPorId(user.getId());
     }
 
     @Get(produces = MediaType.APPLICATION_JSON)
-    public List<AlunoResponseDTO> listar() {
+    public List<AlunoResponseDTO> listar(AuthenticatedUser user) {
+        authorization.requireProfessor(user);
         return alunoService.listar();
     }
 
     @Get(value = "/{id}", produces = MediaType.APPLICATION_JSON)
-    public AlunoResponseDTO buscar(@PathVariable Long id) {
+    public AlunoResponseDTO buscar(@PathVariable Long id, AuthenticatedUser user) {
+        authorization.requireLeituraAluno(user, id);
         return alunoService.buscarPorId(id);
     }
 
@@ -46,12 +58,16 @@ public class AlunoController {
     }
 
     @Put(value = "/{id}", consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON)
-    public AlunoResponseDTO atualizar(@PathVariable Long id, @Body @Valid AlunoUpdateDTO dto) {
+    public AlunoResponseDTO atualizar(@PathVariable Long id,
+                                      @Body @Valid AlunoUpdateDTO dto,
+                                      AuthenticatedUser user) {
+        authorization.requireEdicaoProprioAluno(user, id);
         return alunoService.atualizar(id, dto);
     }
 
     @Delete("/{id}")
-    public HttpResponse<Void> remover(@PathVariable Long id) {
+    public HttpResponse<Void> remover(@PathVariable Long id, AuthenticatedUser user) {
+        authorization.denyRemocao();
         alunoService.remover(id);
         return HttpResponse.noContent();
     }

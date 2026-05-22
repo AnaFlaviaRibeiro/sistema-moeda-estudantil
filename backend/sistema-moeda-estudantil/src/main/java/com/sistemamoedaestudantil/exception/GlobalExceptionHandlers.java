@@ -31,4 +31,26 @@ public class GlobalExceptionHandlers {
             return HttpResponse.<ApiError>unprocessableEntity().body(err);
         }
     }
+
+    @Singleton
+    @Requires(classes = { UnauthorizedException.class, ExceptionHandler.class })
+    @Produces
+    public static class UnauthorizedHandler implements ExceptionHandler<UnauthorizedException, HttpResponse<ApiError>> {
+        @Override
+        public HttpResponse<ApiError> handle(HttpRequest request, UnauthorizedException ex) {
+            ApiError err = new ApiError(HttpStatus.UNAUTHORIZED.getCode(), "Unauthorized", ex.getMessage());
+            return HttpResponse.status(HttpStatus.UNAUTHORIZED).body(err);
+        }
+    }
+
+    @Singleton
+    @Requires(classes = { ForbiddenException.class, ExceptionHandler.class })
+    @Produces
+    public static class ForbiddenHandler implements ExceptionHandler<ForbiddenException, HttpResponse<ApiError>> {
+        @Override
+        public HttpResponse<ApiError> handle(HttpRequest request, ForbiddenException ex) {
+            ApiError err = new ApiError(HttpStatus.FORBIDDEN.getCode(), "Forbidden", ex.getMessage());
+            return HttpResponse.status(HttpStatus.FORBIDDEN).body(err);
+        }
+    }
 }

@@ -9,6 +9,7 @@ import com.sistemamoedaestudantil.dto.EnderecoDTO;
 import com.sistemamoedaestudantil.exception.BusinessException;
 import com.sistemamoedaestudantil.exception.NotFoundException;
 import com.sistemamoedaestudantil.repository.EmpresaParceiraRepository;
+import com.sistemamoedaestudantil.security.PasswordService;
 import jakarta.inject.Singleton;
 
 import javax.transaction.Transactional;
@@ -19,9 +20,12 @@ import java.util.List;
 public class EmpresaParceiraService {
 
     private final EmpresaParceiraRepository empresaRepository;
+    private final PasswordService passwordService;
 
-    public EmpresaParceiraService(EmpresaParceiraRepository empresaRepository) {
+    public EmpresaParceiraService(EmpresaParceiraRepository empresaRepository,
+                                  PasswordService passwordService) {
         this.empresaRepository = empresaRepository;
+        this.passwordService = passwordService;
     }
 
     @Transactional
@@ -36,8 +40,8 @@ public class EmpresaParceiraService {
         EmpresaParceira empresa = new EmpresaParceira();
         empresa.setRazaoSocial(dto.getRazaoSocial());
         empresa.setCnpj(dto.getCnpj());
-        empresa.setEmail(dto.getEmail());
-        empresa.setSenha(dto.getSenha());
+        empresa.setEmail(dto.getEmail().trim().toLowerCase());
+        empresa.setSenha(passwordService.hash(dto.getSenha()));
         empresa.setContato(dto.getContato());
         empresa.setEndereco(toEndereco(dto.getEndereco()));
 

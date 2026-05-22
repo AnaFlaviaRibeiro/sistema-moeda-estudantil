@@ -5,6 +5,7 @@ const base = '/api/alunos'
 
 export const alunosApi = {
   list: () => http.get<Aluno[]>(base).then(r => r.data),
+  me: () => http.get<Aluno>(`${base}/me`).then(r => r.data),
   get: (id: number) => http.get<Aluno>(`${base}/${id}`).then(r => r.data),
   create: (dto: AlunoCreate) => http.post<Aluno>(base, dto).then(r => r.data),
   update: (id: number, dto: AlunoUpdate) =>
