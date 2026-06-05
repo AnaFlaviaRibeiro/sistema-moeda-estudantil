@@ -244,12 +244,25 @@ public class DataSeeder implements ApplicationEventListener<ServerStartupEvent> 
         LOG.info("Seed: 4 empresas parceiras inseridas.");
     }
 
+    private static final String NOME_VANTAGEM_ALMOCO = "Almoço com 20% de desconto";
+    private static final String NOME_VANTAGEM_LIVRO = "Livro técnico à escolha";
+    private static final String NOME_VANTAGEM_KIT = "Kit de canetas e caderno";
+
+    private static final String FOTO_VANTAGEM_ALMOCO =
+            "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&h=400&fit=crop";
+    private static final String FOTO_VANTAGEM_LIVRO =
+            "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=600&h=400&fit=crop";
+    private static final String FOTO_VANTAGEM_KIT =
+            "https://images.unsplash.com/photo-1455390573451-76b909726ece?w=600&h=400&fit=crop";
+
     private void seedVantagens() {
-        if (vantagemRepository.count() > 0) {
-            return;
-        }
         List<EmpresaParceira> empresas = listEmpresas();
         if (empresas.isEmpty()) {
+            return;
+        }
+
+        if (vantagemRepository.count() > 0) {
+            atualizarFotosVantagensMockadas();
             return;
         }
 
@@ -258,28 +271,62 @@ public class DataSeeder implements ApplicationEventListener<ServerStartupEvent> 
         EmpresaParceira papelaria = empresas.size() > 2 ? empresas.get(2) : restaurante;
 
         Vantagem v1 = new Vantagem();
-        v1.setNome("Almoço com 20% de desconto");
+        v1.setNome(NOME_VANTAGEM_ALMOCO);
         v1.setDescricao("Desconto em qualquer prato do cardápio do restaurante universitário.");
+        v1.setFotoUrl(FOTO_VANTAGEM_ALMOCO);
         v1.setCustoEmMoedas(30);
         v1.setAtiva(true);
         v1.setEmpresa(restaurante);
 
         Vantagem v2 = new Vantagem();
-        v2.setNome("Livro técnico à escolha");
+        v2.setNome(NOME_VANTAGEM_LIVRO);
         v2.setDescricao("Resgate de um livro técnico de até R$ 80 na livraria parceira.");
+        v2.setFotoUrl(FOTO_VANTAGEM_LIVRO);
         v2.setCustoEmMoedas(80);
         v2.setAtiva(true);
         v2.setEmpresa(livraria);
 
         Vantagem v3 = new Vantagem();
-        v3.setNome("Kit de canetas e caderno");
+        v3.setNome(NOME_VANTAGEM_KIT);
         v3.setDescricao("Kit com 3 canetas e 1 caderno universitário 96 folhas.");
+        v3.setFotoUrl(FOTO_VANTAGEM_KIT);
         v3.setCustoEmMoedas(25);
         v3.setAtiva(true);
         v3.setEmpresa(papelaria);
 
         vantagemRepository.saveAll(Arrays.asList(v1, v2, v3));
         LOG.info("Seed: 3 vantagens inseridas.");
+    }
+
+    private void atualizarFotosVantagensMockadas() {
+        boolean updated = false;
+        for (Vantagem v : vantagemRepository.findAll()) {
+            String foto = fotoTematicaParaVantagem(v.getNome());
+            if (foto == null) {
+                continue;
+            }
+            if (v.getFotoUrl() == null || !foto.equals(v.getFotoUrl())) {
+                v.setFotoUrl(foto);
+                vantagemRepository.update(v);
+                updated = true;
+            }
+        }
+        if (updated) {
+            LOG.info("Seed: fotos temáticas atualizadas nas vantagens mockadas.");
+        }
+    }
+
+    private String fotoTematicaParaVantagem(String nome) {
+        if (NOME_VANTAGEM_ALMOCO.equals(nome)) {
+            return FOTO_VANTAGEM_ALMOCO;
+        }
+        if (NOME_VANTAGEM_LIVRO.equals(nome)) {
+            return FOTO_VANTAGEM_LIVRO;
+        }
+        if (NOME_VANTAGEM_KIT.equals(nome)) {
+            return FOTO_VANTAGEM_KIT;
+        }
+        return null;
     }
 
     private List<EmpresaParceira> listEmpresas() {

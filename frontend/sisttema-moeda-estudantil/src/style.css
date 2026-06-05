@@ -21,14 +21,25 @@
 
   font: 15px/1.55 "JetBrains Mono", ui-monospace, "Cascadia Code", "Fira Code", monospace;
   color: var(--text);
-  background:
-    radial-gradient(circle at top left, rgba(37, 99, 235, 0.14), transparent 34rem),
-    linear-gradient(135deg, #f8fafc 0%, #eef2f7 52%, #e2e8f0 100%);
 }
 
 *, *::before, *::after { box-sizing: border-box; }
 
-body, html, #app { margin: 0; min-height: 100vh; }
+body, html, #app {
+  margin: 0;
+  min-height: 100vh;
+}
+
+body {
+  background-color: #1a3d4d;
+  background-image:
+    linear-gradient(rgba(238, 242, 247, 0.68), rgba(220, 230, 244, 0.76)),
+    url("./assets/background.jpg");
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
 
 button, input, select, textarea { font: inherit; }
 
@@ -324,10 +335,11 @@ p { margin: 0; color: var(--text-muted); }
 
 .stat-card,
 .card {
-  background: rgba(255, 255, 255, .92);
-  border: 1px solid rgba(226, 232, 240, .9);
+  background: rgba(255, 255, 255, .88);
+  border: 1px solid rgba(226, 232, 240, .92);
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(6px);
 }
 
 .stat-card {
@@ -488,10 +500,11 @@ table {
   border-collapse: separate;
   border-spacing: 0;
   overflow: hidden;
-  background: var(--surface);
+  background: rgba(255, 255, 255, 0.9);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(6px);
 }
 
 thead {
@@ -911,11 +924,12 @@ legend {
 }
 
 .vantagem-card {
-  background: var(--surface);
+  background: rgba(255, 255, 255, 0.9);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   overflow: hidden;
   box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(6px);
   display: flex;
   flex-direction: column;
 }

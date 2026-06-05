@@ -27,6 +27,7 @@ public class EmailService {
     private final String smtpPassword;
     private final boolean smtpAuth;
     private final boolean smtpStartTls;
+    private final String overrideAluno;
 
     public EmailService(
             @Value("${email.enabled:false}") boolean enabled,
@@ -36,7 +37,8 @@ public class EmailService {
             @Value("${email.smtp.username:}") String smtpUsername,
             @Value("${email.smtp.password:}") String smtpPassword,
             @Value("${email.smtp.auth:false}") boolean smtpAuth,
-            @Value("${email.smtp.starttls:false}") boolean smtpStartTls) {
+            @Value("${email.smtp.starttls:false}") boolean smtpStartTls,
+            @Value("${email.override-aluno:}") String overrideAluno) {
         this.enabled = enabled;
         this.from = from;
         this.smtpHost = smtpHost;
@@ -45,6 +47,7 @@ public class EmailService {
         this.smtpPassword = smtpPassword;
         this.smtpAuth = smtpAuth;
         this.smtpStartTls = smtpStartTls;
+        this.overrideAluno = overrideAluno;
     }
 
     public void enviarMoedasParaAluno(String emailAluno, String nomeAluno, String nomeProfessor,
@@ -54,7 +57,7 @@ public class EmailService {
                 + "O professor " + nomeProfessor + " enviou " + valor + " moeda(s) para você.\n\n"
                 + "Motivo: " + motivo + "\n\n"
                 + "Acesse o sistema para consultar seu saldo e extrato.\n";
-        enviar(emailAluno, assunto, corpo);
+        enviarParaAluno(emailAluno, assunto, corpo);
     }
 
     public void enviarConfirmacaoDistribuicaoProfessor(String emailProfessor, String nomeProfessor,
@@ -77,7 +80,7 @@ public class EmailService {
                 + "Custo: " + custo + " moeda(s)\n"
                 + "Código do cupom: " + codigoCupom + "\n\n"
                 + "Apresente este código na troca presencial.\n";
-        enviar(emailAluno, assunto, corpo);
+        enviarParaAluno(emailAluno, assunto, corpo);
     }
 
     public void enviarCupomEmpresa(String emailEmpresa, String razaoSocial, String nomeAluno,
@@ -93,9 +96,29 @@ public class EmailService {
         enviar(emailEmpresa, assunto, corpo);
     }
 
+    private void enviarParaAluno(String emailOriginal, String assunto, String corpo) {
+        String destinatario = emailOriginal;
+        String corpoFinal = corpo;
+        if (temOverrideAluno()) {
+            LOG.info("[EMAIL simulação] Aluno {} → {}", emailOriginal, overrideAluno.trim());
+            destinatario = overrideAluno.trim();
+            corpoFinal = "[Simulação — destinatário original: " + emailOriginal + "]\n\n" + corpo;
+        }
+        enviar(destinatario, assunto, corpoFinal);
+    }
+
+    private boolean temOverrideAluno() {
+        return overrideAluno != null && !overrideAluno.trim().isEmpty();
+    }
+
     private void enviar(String destinatario, String assunto, String corpo) {
         if (!enabled) {
             LOG.info("[EMAIL desabilitado] Para: {} | Assunto: {}\n{}", destinatario, assunto, corpo);
+            return;
+        }
+
+        if (smtpAuth && (smtpPassword == null || smtpPassword.trim().isEmpty())) {
+            LOG.error("[EMAIL] SMTP habilitado mas email.smtp.password (ou GMAIL_APP_PASSWORD) está vazio.");
             return;
         }
 
@@ -105,6 +128,7 @@ public class EmailService {
             props.put("mail.smtp.port", String.valueOf(smtpPort));
             props.put("mail.smtp.auth", String.valueOf(smtpAuth));
             props.put("mail.smtp.starttls.enable", String.valueOf(smtpStartTls));
+            props.put("mail.smtp.ssl.trust", smtpHost);
 
             Session session;
             if (smtpAuth) {
