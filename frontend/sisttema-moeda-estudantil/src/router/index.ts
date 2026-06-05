@@ -68,6 +68,42 @@ export const router = createRouter({
       path: '/empresas',
       redirect: { name: 'acesso-negado' },
     },
+    {
+      path: '/vantagens',
+      name: 'aluno-vantagens',
+      component: () => import('../views/aluno/VantagensListView.vue'),
+    },
+    {
+      path: '/extrato',
+      name: 'aluno-extrato',
+      component: () => import('../views/aluno/ExtratoAlunoView.vue'),
+    },
+    {
+      path: '/professor/extrato',
+      name: 'professor-extrato',
+      component: () => import('../views/professor/ExtratoProfessorView.vue'),
+    },
+    {
+      path: '/empresa/vantagens',
+      name: 'empresa-vantagens',
+      component: () => import('../views/empresa/VantagensListView.vue'),
+    },
+    {
+      path: '/empresa/vantagens/nova',
+      name: 'empresa-vantagem-nova',
+      component: () => import('../views/empresa/VantagemFormView.vue'),
+    },
+    {
+      path: '/empresa/vantagens/:id/editar',
+      name: 'empresa-vantagem-editar',
+      component: () => import('../views/empresa/VantagemFormView.vue'),
+      props: true,
+    },
+    {
+      path: '/empresa/resgates',
+      name: 'empresa-resgates',
+      component: () => import('../views/empresa/ResgatesView.vue'),
+    },
   ],
 })
 

@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: moeda-estudantil-db
+    environment:
+      POSTGRES_DB: moeda_estudantil
+      POSTGRES_USER: moeda
+      POSTGRES_PASSWORD: moeda
+    ports:
+      - "5432:5432"
+    volumes:
+      - moeda_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U moeda -d moeda_estudantil"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  moeda_pgdata:

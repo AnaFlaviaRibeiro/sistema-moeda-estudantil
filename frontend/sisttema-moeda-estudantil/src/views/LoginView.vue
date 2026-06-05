@@ -4,6 +4,7 @@ import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { extractErrorMessage } from '../api/client'
 import { homeRouteForRole } from '../permissions'
 import { useAuth } from '../composables/useAuth'
+import logoUrl from '../assets/GeniosCoins.png'
 
 const router = useRouter()
 const route = useRoute()
@@ -41,7 +42,9 @@ async function onSubmit() {
   <div class="login-page">
     <section class="login-card card">
       <div class="login-brand">
-        <div class="brand-mark">ME</div>
+        <div class="brand-mark">
+          <img :src="logoUrl" alt="GênioCoins" />
+        </div>
         <div>
           <span class="eyebrow">Programa de mérito</span>
           <h1>Entrar no sistema</h1>

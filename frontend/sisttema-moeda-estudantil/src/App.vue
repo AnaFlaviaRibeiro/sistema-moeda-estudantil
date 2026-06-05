@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import { navItemsForRole } from './permissions'
 import { useAuth } from './composables/useAuth'
+import logoUrl from './assets/GeniosCoins.png'
 
 const route = useRoute()
 const router = useRouter()
@@ -32,9 +33,11 @@ function logout() {
   <div v-else class="app">
     <aside class="sidebar">
       <div class="brand">
-        <div class="brand-mark">ME</div>
+        <div class="brand-mark">
+          <img :src="logoUrl" alt="GênioCoins" />
+        </div>
         <div>
-          <strong>Moeda Estudantil</strong>
+          <strong>GênioCoins</strong>
           <span>Programa de mérito</span>
         </div>
       </div>

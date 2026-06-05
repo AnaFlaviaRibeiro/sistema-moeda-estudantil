@@ -27,7 +27,7 @@ public class Vantagem {
     @Column(length = 1000)
     private String descricao;
 
-    @Column(name = "foto_url", length = 500)
+    @Column(name = "foto_url", columnDefinition = "TEXT")
     private String fotoUrl;
 
     @Column(name = "custo_em_moedas", nullable = false)

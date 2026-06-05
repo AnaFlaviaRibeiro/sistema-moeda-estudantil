@@ -71,6 +71,76 @@ export interface EmpresaParceiraUpdate {
   endereco?: Endereco
 }
 
+export type TipoTransacao = 'DISTRIBUICAO' | 'RESGATE' | 'CREDITO_SEMESTRAL'
+
+export interface Professor {
+  id: number
+  nome: string
+  email: string
+  cpf: string
+  departamento: string
+  saldo: number
+  instituicao: Instituicao
+}
+
+export interface Vantagem {
+  id: number
+  nome: string
+  descricao?: string
+  fotoUrl?: string
+  custoEmMoedas: number
+  ativa: boolean
+  empresaId?: number
+  empresaNome?: string
+}
+
+export interface VantagemCreate {
+  nome: string
+  descricao?: string
+  fotoUrl?: string
+  custoEmMoedas: number
+}
+
+export interface VantagemUpdate {
+  nome: string
+  descricao?: string
+  fotoUrl?: string
+  custoEmMoedas: number
+  ativa: boolean
+}
+
+export interface Transacao {
+  id: number
+  tipo: TipoTransacao
+  valor: number
+  descricao?: string
+  dataHora: string
+  codigoCupom?: string
+  cupomConferido?: boolean
+  alunoId?: number
+  alunoNome?: string
+  professorId?: number
+  professorNome?: string
+  vantagemId?: number
+  vantagemNome?: string
+  empresaNome?: string
+}
+
+export interface Extrato {
+  saldo: number
+  transacoes: Transacao[]
+}
+
+export interface DistribuicaoMoedas {
+  alunoId: number
+  valor: number
+  motivo: string
+}
+
+export interface ResgateVantagem {
+  vantagemId: number
+}
+
 export interface ApiError {
   status: number
   error: string

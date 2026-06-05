@@ -5,10 +5,12 @@ import com.sistemamoedaestudantil.domain.EmpresaParceira;
 import com.sistemamoedaestudantil.domain.Endereco;
 import com.sistemamoedaestudantil.domain.Instituicao;
 import com.sistemamoedaestudantil.domain.Professor;
+import com.sistemamoedaestudantil.domain.Vantagem;
 import com.sistemamoedaestudantil.repository.AlunoRepository;
 import com.sistemamoedaestudantil.repository.EmpresaParceiraRepository;
 import com.sistemamoedaestudantil.repository.InstituicaoRepository;
 import com.sistemamoedaestudantil.repository.ProfessorRepository;
+import com.sistemamoedaestudantil.repository.VantagemRepository;
 import com.sistemamoedaestudantil.security.PasswordService;
 import io.micronaut.context.event.ApplicationEventListener;
 import io.micronaut.runtime.server.event.ServerStartupEvent;
@@ -30,17 +32,20 @@ public class DataSeeder implements ApplicationEventListener<ServerStartupEvent> 
     private final ProfessorRepository professorRepository;
     private final AlunoRepository alunoRepository;
     private final EmpresaParceiraRepository empresaParceiraRepository;
+    private final VantagemRepository vantagemRepository;
     private final PasswordService passwordService;
 
     public DataSeeder(InstituicaoRepository instituicaoRepository,
                       ProfessorRepository professorRepository,
                       AlunoRepository alunoRepository,
                       EmpresaParceiraRepository empresaParceiraRepository,
+                      VantagemRepository vantagemRepository,
                       PasswordService passwordService) {
         this.instituicaoRepository = instituicaoRepository;
         this.professorRepository = professorRepository;
         this.alunoRepository = alunoRepository;
         this.empresaParceiraRepository = empresaParceiraRepository;
+        this.vantagemRepository = vantagemRepository;
         this.passwordService = passwordService;
     }
 
@@ -51,6 +56,7 @@ public class DataSeeder implements ApplicationEventListener<ServerStartupEvent> 
         seedProfessores();
         seedAlunos();
         seedEmpresasParceiras();
+        seedVantagens();
     }
 
     private void seedInstituicoes() {
@@ -236,6 +242,52 @@ public class DataSeeder implements ApplicationEventListener<ServerStartupEvent> 
 
         empresaParceiraRepository.saveAll(Arrays.asList(e1, e2, e3, e4));
         LOG.info("Seed: 4 empresas parceiras inseridas.");
+    }
+
+    private void seedVantagens() {
+        if (vantagemRepository.count() > 0) {
+            return;
+        }
+        List<EmpresaParceira> empresas = listEmpresas();
+        if (empresas.isEmpty()) {
+            return;
+        }
+
+        EmpresaParceira restaurante = empresas.get(0);
+        EmpresaParceira livraria = empresas.size() > 1 ? empresas.get(1) : restaurante;
+        EmpresaParceira papelaria = empresas.size() > 2 ? empresas.get(2) : restaurante;
+
+        Vantagem v1 = new Vantagem();
+        v1.setNome("Almoço com 20% de desconto");
+        v1.setDescricao("Desconto em qualquer prato do cardápio do restaurante universitário.");
+        v1.setCustoEmMoedas(30);
+        v1.setAtiva(true);
+        v1.setEmpresa(restaurante);
+
+        Vantagem v2 = new Vantagem();
+        v2.setNome("Livro técnico à escolha");
+        v2.setDescricao("Resgate de um livro técnico de até R$ 80 na livraria parceira.");
+        v2.setCustoEmMoedas(80);
+        v2.setAtiva(true);
+        v2.setEmpresa(livraria);
+
+        Vantagem v3 = new Vantagem();
+        v3.setNome("Kit de canetas e caderno");
+        v3.setDescricao("Kit com 3 canetas e 1 caderno universitário 96 folhas.");
+        v3.setCustoEmMoedas(25);
+        v3.setAtiva(true);
+        v3.setEmpresa(papelaria);
+
+        vantagemRepository.saveAll(Arrays.asList(v1, v2, v3));
+        LOG.info("Seed: 3 vantagens inseridas.");
+    }
+
+    private List<EmpresaParceira> listEmpresas() {
+        List<EmpresaParceira> result = new ArrayList<>();
+        for (EmpresaParceira e : empresaParceiraRepository.findAll()) {
+            result.add(e);
+        }
+        return result;
     }
 
     private List<Instituicao> listInstituicoes() {
