@@ -14,54 +14,41 @@ sequenceDiagram
     autonumber
     actor Aluno as Aluno
     participant View as VantagensListView<br/>(Vue 3)
-    participant VantAPI as vantagensApi<br/>(Axios)
-    participant AlunoAPI as alunosApi<br/>(Axios)
+    participant API as vantagensApi<br/>(Axios)
     participant Filter as AuthFilter
-    participant VantCtrl as VantagemController
-    participant AlunoCtrl as AlunoController
+    participant Ctrl as VantagemController
     participant Auth as AuthorizationService
-    participant VantSvc as VantagemService
-    participant AlunoSvc as AlunoService
-    participant VantRepo as VantagemRepository
-    participant AlunoRepo as AlunoRepository
+    participant Svc as VantagemService
+    participant Repo as VantagemRepository
     participant DB as PostgreSQL
 
     Aluno->>View: Acessa /vantagens
 
-    View->>VantAPI: list()
-    View->>AlunoAPI: me()
+    View->>API: list()
 
-    par Consulta vantagens
-        VantAPI->>VantCtrl: GET /api/vantagens<br/>Authorization: Bearer JWT
-        VantCtrl->>Filter: Valida token JWT
-        Filter-->>VantCtrl: AuthenticatedUser (tipo=ALUNO, id)
-        VantCtrl->>Auth: requireAluno(user)
-        Auth-->>VantCtrl: OK
-        VantCtrl->>VantSvc: listarAtivas()
-        VantSvc->>VantRepo: findByAtivaTrue()
-        VantRepo->>DB: SELECT * FROM vantagem WHERE ativa = true
-        DB-->>VantRepo: Lista de Vantagem
-        VantRepo-->>VantSvc: List<Vantagem>
-        VantSvc->>VantSvc: toResponseDTO (cada item)
-        VantSvc-->>VantCtrl: List<VantagemResponseDTO>
-        VantCtrl-->>VantAPI: HTTP 200 + JSON
-        VantAPI-->>View: Vantagem[]
-    and Consulta saldo do aluno
-        AlunoAPI->>AlunoCtrl: GET /api/alunos/me<br/>Authorization: Bearer JWT
-        AlunoCtrl->>Auth: requireAluno(user)
-        Auth-->>AlunoCtrl: OK
-        AlunoCtrl->>AlunoSvc: buscarPorId(alunoId)
-        AlunoSvc->>AlunoRepo: findById(alunoId)
-        AlunoRepo->>DB: SELECT aluno
-        DB-->>AlunoRepo: Aluno
-        AlunoRepo-->>AlunoSvc: Aluno
-        AlunoSvc-->>AlunoCtrl: AlunoResponseDTO
-        AlunoCtrl-->>AlunoAPI: HTTP 200 + JSON
-        AlunoAPI-->>View: Aluno (saldo)
-    end
+    API->>Ctrl: GET /api/vantagens<br/>Authorization: Bearer JWT
+
+    Ctrl->>Filter: Valida token JWT
+    Filter-->>Ctrl: AuthenticatedUser (tipo=ALUNO, id)
+
+    Ctrl->>Auth: requireAluno(user)
+    Auth-->>Ctrl: OK
+
+    Ctrl->>Svc: listarAtivas()
+
+    Svc->>Repo: findByAtivaTrue()
+    Repo->>DB: SELECT * FROM vantagem WHERE ativa = true
+    DB-->>Repo: Lista de Vantagem
+    Repo-->>Svc: List<Vantagem>
+
+    Svc->>Svc: toResponseDTO (cada item)
+    Svc-->>Ctrl: List<VantagemResponseDTO>
+
+    Ctrl-->>API: HTTP 200 + JSON
+    API-->>View: Vantagem[]
 
     View->>View: Renderiza cards com nome, descrição,<br/>foto, custo e nome da empresa
-    View-->>Aluno: Exibe vantagens ativas e saldo atual
+    View-->>Aluno: Exibe vantagens ativas disponíveis
 ```
 
 ---
@@ -71,10 +58,12 @@ sequenceDiagram
 | Passo | Descrição |
 |-------|-----------|
 | 1 | O aluno autenticado navega até a tela de vantagens. |
-| 2–3 | A view dispara duas requisições em paralelo: listagem de vantagens e perfil do aluno (saldo). |
-| 4–12 | O backend valida JWT, exige perfil `ALUNO` e retorna apenas vantagens com `ativa = true`. |
-| 13–20 | Em paralelo, consulta o saldo do aluno logado via `/api/alunos/me`. |
-| 21–22 | O frontend exibe cards com foto, descrição, custo em moedas e empresa parceira. |
+| 2–3 | A view solicita a listagem via `vantagensApi.list()`. |
+| 4–7 | O backend valida JWT e exige perfil `ALUNO`. |
+| 8–12 | O serviço consulta apenas vantagens com `ativa = true` e monta os DTOs de resposta. |
+| 13–15 | O frontend exibe cards com foto, descrição, custo em moedas e empresa parceira. |
+
+> **Nota:** a tela também exibe o saldo do aluno (`GET /api/alunos/me`), mas isso pertence a outro fluxo auxiliar e **não faz parte** deste diagrama de listagem.
 
 ---
 
@@ -84,8 +73,7 @@ sequenceDiagram
 |--------|----------|
 | Frontend — view | `frontend/sisttema-moeda-estudantil/src/views/aluno/VantagensListView.vue` |
 | Frontend — rota | `/vantagens` (`aluno-vantagens`) |
-| Frontend — API vantagens | `vantagensApi.list()` → `GET /api/vantagens` |
-| Frontend — API aluno | `alunosApi.me()` → `GET /api/alunos/me` |
+| Frontend — API | `vantagensApi.list()` → `GET /api/vantagens` |
 | Backend — controller | `VantagemController.listarAtivas()` |
 | Backend — autorização | `AuthorizationService.requireAluno()` |
 | Backend — serviço | `VantagemService.listarAtivas()` |
@@ -99,4 +87,4 @@ sequenceDiagram
 
 - O aluno visualiza todas as vantagens **ativas** cadastradas pelas empresas parceiras.
 - Cada vantagem exibe descrição, foto (quando informada) e custo em moedas.
-- O saldo atual do aluno é exibido para apoiar a decisão de resgate.
+- O aluno consegue visualizar o custo em moedas de cada vantagem para decidir o resgate.
