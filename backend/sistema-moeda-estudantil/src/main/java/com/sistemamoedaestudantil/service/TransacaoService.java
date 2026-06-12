@@ -169,7 +169,13 @@ public class TransacaoService {
     }
 
     private String gerarCodigoCupom() {
-        return UUID.randomUUID().toString().replace("-", "").substring(0, 12).toUpperCase();
+        for (int tentativa = 0; tentativa < 10; tentativa++) {
+            String codigo = UUID.randomUUID().toString().replace("-", "").substring(0, 12).toUpperCase();
+            if (!transacaoRepository.findByCodigoCupom(codigo).isPresent()) {
+                return codigo;
+            }
+        }
+        throw new BusinessException("Não foi possível gerar um código de cupom único.");
     }
 
     private List<TransacaoResponseDTO> toResponseList(List<Transacao> transacoes) {

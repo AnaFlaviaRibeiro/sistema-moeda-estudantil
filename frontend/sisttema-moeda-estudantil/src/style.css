@@ -1032,3 +1032,39 @@ legend {
 .modal-card h2 {
   margin: 0;
 }
+
+.cupom-modal .eyebrow {
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.cupom-codigo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 18px;
+  border-radius: 14px;
+  background: var(--surface-muted);
+  border: 1px dashed var(--border);
+  text-align: center;
+}
+
+.cupom-codigo span {
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.cupom-codigo code {
+  font-size: 1.5rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  color: var(--primary);
+}
+
+.cupom-hint {
+  font-size: 0.92rem;
+  text-align: center;
+}
