@@ -60,3 +60,49 @@ export function onCepInput(event: Event, setter: (value: string) => void) {
   const el = event.target as HTMLInputElement
   setter(maskCep(el.value))
 }
+
+/** RG: UF-00.000.000 (ex.: MG-52.345.678) */
+export function maskRg(value: string): string {
+  const raw = value.toUpperCase().replace(/[^A-Z0-9]/g, '')
+
+  let uf = ''
+  let digits = ''
+
+  for (const ch of raw) {
+    if (uf.length < 2 && /[A-Z]/.test(ch)) {
+      uf += ch
+      continue
+    }
+    if (/[0-9]/.test(ch)) {
+      digits += ch
+    }
+  }
+
+  digits = digits.slice(0, 9)
+
+  if (!uf && digits.length === 0) {
+    return ''
+  }
+
+  if (!uf) {
+    if (digits.length <= 2) return digits
+    if (digits.length <= 5) return `${digits.slice(0, 2)}.${digits.slice(2)}`
+    if (digits.length <= 8) return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5)}`
+    return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}-${digits.slice(8)}`
+  }
+
+  let formatted = uf
+  if (digits.length === 0) {
+    return formatted
+  }
+
+  formatted += '-'
+  if (digits.length <= 2) return formatted + digits
+  if (digits.length <= 5) return `${formatted}${digits.slice(0, 2)}.${digits.slice(2)}`
+  return `${formatted}${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5)}`
+}
+
+export function onRgInput(event: Event, setter: (value: string) => void) {
+  const el = event.target as HTMLInputElement
+  setter(maskRg(el.value))
+}

@@ -6,6 +6,7 @@ import { empresasApi } from '../../api/empresas'
 import { extractErrorMessage } from '../../api/client'
 import { useAuth } from '../../composables/useAuth'
 import { maskCep, maskCnpj, maskTelefone, onCepInput, onCnpjInput, onTelefoneInput } from '../../utils/masks'
+import { useViaCep } from '../../composables/useViaCep'
 import type { EmpresaParceiraCreate, EmpresaParceiraUpdate } from '../../types'
 
 const props = defineProps<{ id?: string }>()
@@ -46,6 +47,12 @@ const form = reactive<EmpresaParceiraCreate & EmpresaParceiraUpdate>({
 const error = ref<string | null>(null)
 const loading = ref(false)
 const saving = ref(false)
+
+const { cepLoading, cepError, onCepChange } = useViaCep()
+
+function handleCepInput(event: Event) {
+  onCepInput(event, (value) => onCepChange(form.endereco!, value))
+}
 
 async function load() {
   if (!isEdit.value) return
@@ -169,7 +176,21 @@ onMounted(load)
 
     <fieldset>
       <legend>Endereço</legend>
-      <div class="form-row-3">
+      <label class="cep-field">
+        CEP
+        <input
+          :value="form.endereco!.cep"
+          maxlength="9"
+          inputmode="numeric"
+          autocomplete="postal-code"
+          placeholder="00000-000"
+          :disabled="cepLoading"
+          @input="handleCepInput"
+        />
+        <small v-if="cepLoading" class="field-hint">Buscando endereço…</small>
+        <small v-else-if="cepError" class="field-hint field-hint-error">{{ cepError }}</small>
+      </label>
+      <div class="form-row-3" style="margin-top: 12px;">
         <label>
           Logradouro
           <input v-model="form.endereco!.logradouro" maxlength="200" />
@@ -205,17 +226,6 @@ onMounted(load)
           </select>
         </label>
       </div>
-      <label style="margin-top: 12px; max-width: 200px;">
-        CEP
-        <input
-          :value="form.endereco!.cep"
-          maxlength="9"
-          inputmode="numeric"
-          autocomplete="postal-code"
-          placeholder="00000-000"
-          @input="onCepInput($event, v => (form.endereco!.cep = v))"
-        />
-      </label>
     </fieldset>
 
     <div class="form-actions">

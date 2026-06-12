@@ -1068,3 +1068,19 @@ legend {
   font-size: 0.92rem;
   text-align: center;
 }
+
+.cep-field {
+  max-width: 220px;
+}
+
+.field-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.field-hint-error {
+  color: var(--danger);
+}
